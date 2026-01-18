@@ -1,26 +1,36 @@
 import { useEffect, useState } from "react";
 import Card from "../components/Card";
 import { getHistory } from "../api/api";
-import {
-  History as HistoryIcon,
-  Clock,
-  Loader2,
-  Calendar,
-  Smile,
-  Frown,
-  Meh,
-  Laugh,
-  Angry,
-} from "lucide-react";
+import { History as HistoryIcon, Clock, Loader2, RefreshCw, TrendingUp, Calendar, Smile, Frown, Meh, Laugh, Angry, AlertCircle, BarChart3 } from "lucide-react";
 
 const emotionIcons = {
-  happy: <Smile className="w-5 h-5 text-yellow-400" />,
-  sad: <Frown className="w-5 h-5 text-blue-400" />,
-  neutral: <Meh className="w-5 h-5 text-gray-400" />,
-  angry: <Angry className="w-5 h-5 text-red-400" />,
-  surprise: <Laugh className="w-5 h-5 text-purple-400" />,
-  disgust: <Frown className="w-5 h-5 text-green-400" />,
-  fear: <Frown className="w-5 h-5 text-orange-400" />,
+  happy: <Smile className="h-5 w-5 text-amber-600" />,
+  sad: <Frown className="h-5 w-5 text-sky-600" />,
+  neutral: <Meh className="h-5 w-5 text-slate-600" />,
+  angry: <Angry className="h-5 w-5 text-red-600" />,
+  surprise: <Laugh className="h-5 w-5 text-violet-600" />,
+  disgust: <Frown className="h-5 w-5 text-emerald-600" />,
+  fear: <Frown className="h-5 w-5 text-orange-600" />,
+};
+
+const emotionBg = {
+  happy: "bg-amber-50 border-amber-200",
+  sad: "bg-sky-50 border-sky-200",
+  angry: "bg-red-50 border-red-200",
+  neutral: "bg-slate-100 border-slate-200",
+  surprise: "bg-violet-50 border-violet-200",
+  disgust: "bg-emerald-50 border-emerald-200",
+  fear: "bg-orange-50 border-orange-200",
+};
+
+const barColors = {
+  happy: "bg-amber-500",
+  sad: "bg-sky-500",
+  angry: "bg-red-500",
+  neutral: "bg-slate-500",
+  surprise: "bg-violet-500",
+  disgust: "bg-emerald-500",
+  fear: "bg-orange-500",
 };
 
 export default function History() {
@@ -31,111 +41,127 @@ export default function History() {
     try {
       setLoading(true);
       const res = await getHistory();
-      console.log("History data received:", res.data);
       setData(res.data || []);
-    } catch (err) {
-      console.error("History error:", err);
-      console.error("Error details:", err.response?.data);
-      if (err.response?.status === 401) {
-        // Utilisateur non connecté
-        alert("Veuillez vous connecter pour voir votre historique");
-        setData([]);
-      } else {
-        alert("Erreur lors du chargement de l'historique");
-        setData([]);
-      }
+    } catch (e) {
+      if (e.response?.status === 401) alert("Connectez-vous pour voir l'historique");
+      else alert("Erreur chargement");
+      setData([]);
     } finally {
       setLoading(false);
     }
   };
 
-  useEffect(() => {
-    fetchHistory();
-  }, []);
+  useEffect(() => { fetchHistory(); }, []);
 
-  const formatDate = (date) => {
-    if (!date) return "Date inconnue";
-    try {
-      return new Date(date).toLocaleString("fr-FR", {
-        day: "2-digit",
-        month: "short",
-        year: "numeric",
-        hour: "2-digit",
-        minute: "2-digit",
-      });
-    } catch (e) {
-      return date;
-    }
+  const formatDate = (d) => {
+    if (!d) return "—";
+    try { return new Date(d).toLocaleString("fr-FR", { day: "2-digit", month: "short", year: "numeric", hour: "2-digit", minute: "2-digit" }); }
+    catch { return d; }
   };
 
+  const avg = data.length ? (data.reduce((s, i) => s + (parseFloat(i.confidence) || 0), 0) / data.length).toFixed(1) : 0;
+
   return (
-    <div className="space-y-6">
-      <div className="flex justify-between items-center">
-        <div className="flex items-center gap-2">
-          <HistoryIcon className="w-6 h-6 text-primary" />
-          <h1 className="text-2xl font-bold">Historique</h1>
+    <div className="min-h-screen bg-[#fafbfc] pt-16 pb-20">
+      <div className="max-w-6xl mx-auto px-4 sm:px-6">
+        <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-8">
+          <div className="flex items-center gap-4">
+            <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-[#0f62fe] text-white">
+              <HistoryIcon className="h-6 w-6" />
+            </div>
+            <div>
+              <h1 className="text-3xl md:text-4xl font-bold text-slate-900">Historique</h1>
+              <p className="text-slate-600">Vos analyses</p>
+            </div>
+          </div>
+          <div className="flex items-center gap-3">
+            <span className="px-4 py-2 rounded-xl border border-slate-200 bg-white text-slate-700 font-semibold">{data.length} analyse(s)</span>
+            <button
+              onClick={fetchHistory}
+              disabled={loading}
+              className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-[#0f62fe] text-white font-semibold hover:bg-[#0043ce] disabled:opacity-50"
+            >
+              {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : <RefreshCw className="h-4 w-4" />}
+              Actualiser
+            </button>
+          </div>
         </div>
 
-        <div className="flex items-center gap-4">
-          <div className="text-sm text-gray-400">
-            {data.length} analyse{data.length > 1 ? 's' : ''} trouvée{data.length > 1 ? 's' : ''}
+        {data.length > 0 && (
+          <div className="grid md:grid-cols-3 gap-4 mb-8">
+            <div className="bg-white rounded-2xl p-6 border border-slate-200/80 shadow-[0_2px_15px_-3px_rgba(0,0,0,0.07)]">
+              <BarChart3 className="h-8 w-8 text-[#0f62fe] mb-3" />
+              <p className="text-2xl font-bold text-slate-900">{data.length}</p>
+              <p className="text-sm font-medium text-slate-500">Total</p>
+            </div>
+            <div className="bg-white rounded-2xl p-6 border border-slate-200/80 shadow-[0_2px_15px_-3px_rgba(0,0,0,0.07)]">
+              <TrendingUp className="h-8 w-8 text-[#0f62fe] mb-3" />
+              <p className="text-2xl font-bold text-[#0f62fe]">{avg}%</p>
+              <p className="text-sm font-medium text-slate-500">Confiance moy.</p>
+            </div>
+            <div className="bg-white rounded-2xl p-6 border border-slate-200/80 shadow-[0_2px_15px_-3px_rgba(0,0,0,0.07)]">
+              <Calendar className="h-8 w-8 text-[#0f62fe] mb-3" />
+              <p className="text-lg font-bold text-slate-900">{data[0] ? formatDate(data[0].created_at).split(",")[0] : "—"}</p>
+              <p className="text-sm font-medium text-slate-500">Dernière</p>
+            </div>
           </div>
-          <button
-            onClick={fetchHistory}
-            disabled={loading}
-            className="px-3 py-1 text-sm bg-blue-600 hover:bg-blue-700 text-white rounded-md disabled:opacity-50 disabled:cursor-not-allowed"
-          >
-            {loading ? "Chargement..." : "Actualiser"}
-          </button>
-        </div>
-      </div>
-
-      <Card>
-        {loading ? (
-          <div className="flex justify-center py-12">
-            <Loader2 className="animate-spin w-6 h-6 text-primary" />
-          </div>
-        ) : data.length === 0 ? (
-          <div className="text-center py-12 text-gray-400">
-            <Clock className="w-10 h-10 mx-auto mb-3" />
-            Aucune analyse
-          </div>
-        ) : (
-          <table className="w-full">
-            <thead className="border-b border-white/10 text-gray-400 text-sm">
-              <tr>
-                <th className="pb-3 text-left">Émotion</th>
-                <th className="pb-3 text-left">Confiance</th>
-                <th className="pb-3 text-left">Date</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-white/5">
-              {data.map((item) => (
-                <tr key={item.id} className="hover:bg-white/5">
-                  <td className="py-3 flex items-center gap-2">
-                    {emotionIcons[item.emotion] || <Smile className="w-5 h-5 text-gray-400" />}
-                    <span className="capitalize">{item.emotion}</span>
-                  </td>
-                  <td className="py-3">
-                    <div className="flex items-center gap-2">
-                      <span className="font-semibold">{typeof item.confidence === 'number' ? item.confidence.toFixed(2) : item.confidence}%</span>
-                      <div className="w-20 bg-gray-700 rounded-full h-2">
-                        <div 
-                          className="bg-blue-500 h-2 rounded-full" 
-                          style={{ width: `${Math.min(100, Math.max(0, parseFloat(item.confidence) || 0))}%` }}
-                        ></div>
-                      </div>
-                    </div>
-                  </td>
-                  <td className="text-sm text-gray-400">
-                    {formatDate(item.created_at)}
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
         )}
-      </Card>
+
+        <Card>
+          {loading ? (
+            <div className="flex flex-col items-center justify-center py-16">
+              <Loader2 className="h-10 w-10 animate-spin text-[#0f62fe] mb-4" />
+              <p className="text-slate-600 font-medium">Chargement...</p>
+            </div>
+          ) : data.length === 0 ? (
+            <div className="text-center py-16">
+              <div className="inline-flex h-14 w-14 items-center justify-center rounded-2xl bg-[#e8f0fe] text-[#0f62fe] mb-4">
+                <AlertCircle className="h-7 w-7" />
+              </div>
+              <h3 className="text-xl font-bold text-slate-900 mb-2">Aucune analyse</h3>
+              <p className="text-slate-600">Vos analyses apparaîtront ici.</p>
+            </div>
+          ) : (
+            <div className="overflow-x-auto">
+              <table className="w-full">
+                <thead>
+                  <tr className="border-b border-slate-200">
+                    <th className="pb-4 text-left text-sm font-semibold text-slate-600">Émotion</th>
+                    <th className="pb-4 text-left text-sm font-semibold text-slate-600">Confiance</th>
+                    <th className="pb-4 text-left text-sm font-semibold text-slate-600">Date</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-slate-100">
+                  {data.map((row) => (
+                    <tr key={row.id} className="hover:bg-slate-50/50">
+                      <td className="py-4">
+                        <div className="flex items-center gap-3">
+                          <div className={`flex h-10 w-10 items-center justify-center rounded-xl border ${emotionBg[row.emotion] || "bg-slate-100 border-slate-200"}`}>
+                            {emotionIcons[row.emotion] || <Smile className="h-5 w-5 text-slate-500" />}
+                          </div>
+                          <span className="font-semibold text-slate-900 capitalize">{row.emotion}</span>
+                        </div>
+                      </td>
+                      <td className="py-4">
+                        <div className="flex items-center gap-3">
+                          <span className="font-bold text-[#0f62fe] w-14">{typeof row.confidence === "number" ? row.confidence.toFixed(1) : row.confidence}%</span>
+                          <div className="flex-1 max-w-[180px] h-2 bg-slate-200 rounded-full overflow-hidden">
+                            <div className={`h-full ${barColors[row.emotion] || "bg-[#0f62fe]"} rounded-full`} style={{ width: `${Math.min(100, parseFloat(row.confidence) || 0)}%` }} />
+                          </div>
+                        </div>
+                      </td>
+                      <td className="py-4 text-slate-600 text-sm flex items-center gap-2">
+                        <Clock className="h-4 w-4 text-slate-400" />
+                        {formatDate(row.created_at)}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
+        </Card>
+      </div>
     </div>
   );
 }

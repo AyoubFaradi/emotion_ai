@@ -1,14 +1,11 @@
-@keyframes fade-in {
-  from {
-    opacity: 0;
-    transform: translateY(-6px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
+/* Emotion AI – Design system */
 
-.animate-fade-in {
-  animation: fade-in 0.2s ease-out;
+:root {
+  --primary: #0f62fe;
+  --primary-hover: #0043ce;
+  --primary-muted: #e8f0fe;
+  --surface: #fafbfc;
+  --radius-sm: 12px;
+  --radius-md: 16px;
+  --radius-lg: 24px;
 }
